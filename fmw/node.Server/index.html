@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang ='en'>
+    <head>
+        <meta charset="UTF-8">
+      
+        <title>Websockets</title>
+    </head>
+    <body>
+        <h1>Real Time Can Poling via Websockets</h1>
+		<h5>Type in the RTR code with a R prefix. Ie RF004 for F004 RTR. Use the codes below for special commands:</h5>
+		<p>M: Toggles the IMU output.</p> 
+		<p>N: Toggles the CAN output.</p> 
+		<p>L: Toggles the Clock output.</p> 
+		<p>G: Toggles the GPS output.</p> 
+		<p>S: System hard restart.</p> 
+		<p>U: Immediate SD data flush to database.</p> 
+		<p>O: Immediate OTA update.</p> 
+        <pre id="messages" style="height: 100px; overflow: scroll"></pre>
+        <input type="text" id="messageBox" placeholder="Prepend a R prefix and ommit 0x. Ie. RF004 not R0x00F004" style=" width: 95%; margin-bottom: 10px; padding: 10px;" />
+        <button id="send" title="Send Message!" style="width: 95%; height: 30px;margin-bottom: 10px; padding: 10px;">Send Message</button>
+        
+        <script>
+          (function() {
+            const sendBtn = document.querySelector('#send');
+            const messages = document.querySelector('#messages');
+            const messageBox = document.querySelector('#messageBox');
+        
+            let ws;
+        
+            function showMessage(message) {
+                var res = message.charAt(0);
+                //messages.textContent += `\n\nGeneral Response: ${message}`;
+                if (res=='A') {//If res = c then this is the responce of the OBDH.
+                    messages.textContent += `\n ${message}`;
+                    messages.scrollTop = messages.scrollHeight;
+                    messageBox.value = '';
+                }
+
+            }
+        
+            function init() {
+              if (ws) {
+                ws.onerror = ws.onopen = ws.onclose = null;
+                ws.close();
+              }
+        
+             // ws = new WebSocket('ws://fortion.hopto.org:8989/');
+              ws = new WebSocket('ws://localhost:8989/');
+              ws.onopen = () => {
+                console.log('Connection opened!');
+              }
+              ws.onmessage = ({ data }) => showMessage(data);
+              ws.onclose = function() {
+                ws = null;
+              }
+            }
+        
+            sendBtn.onclick = function() {
+              if (!ws) {
+                showMessage("No WebSocket connection :(");
+                return ;
+              }
+        
+              ws.send('R'+messageBox.value);
+              showMessage(messageBox.value);
+            }
+        
+            init();
+          })();
+        </script>
+
+
+
+    </body>
+
+</html>
+
+
+
